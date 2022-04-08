@@ -43,8 +43,14 @@ mqtt-replay -b tcp://iot.eclipse.org:1883 -i record.mqtt
 ```
 
 This tool also provides the opportunity to start the replay some seconds into the recording and to stop at a certain offset time.
-
 See the output of `mqtt-record -h` for details on the parameters.
+
+During playback, some playback control (play/pause and skipping) is possible by doing simple key presses.
+
+- Halt and restart the playback with the space bar
+- Skip 5 seconds forward with the right arrow key
+- Restart from beginning with TODO
+
 
 
 ## Copyright and license

@@ -22,6 +22,7 @@ import (
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	msgpack "github.com/vmihailenco/msgpack/v5"
+	"golang.org/x/term"
 )
 
 const buildVersion string = "v2.0.0-alpha"
@@ -95,6 +96,9 @@ type Playback struct {
 
 	firstMsgMillis    int64
 	firstMsgWallclock int64
+	haltOffsetMillis  int64
+
+	haltStartWallclock int64
 }
 
 func (p *Playback) Init(startTimeSec uint, endTimeSec uint) {
@@ -138,7 +142,7 @@ func (p *Playback) PlayNextMessage() bool {
 	}
 
 	// wait for target time to be reached
-	targetWallclock := p.firstMsgWallclock + (msg.Millis - p.firstMsgMillis)
+	targetWallclock := p.firstMsgWallclock + (msg.Millis - p.firstMsgMillis) + p.haltOffsetMillis
 	for {
 		if nowMillis() >= targetWallclock {
 			log.Printf("t=%6.2f s, %6d bytes, topic=%s\n", float32(msgMillisRelative)/1000.0, len, msg.Topic)
@@ -150,6 +154,14 @@ func (p *Playback) PlayNextMessage() bool {
 	}
 
 	return true // still messages left
+}
+
+func (p *Playback) Halt() {
+	p.haltStartWallclock = nowMillis()
+}
+
+func (p *Playback) Restart() {
+	p.haltOffsetMillis = nowMillis() - p.haltStartWallclock
 }
 
 func main() {
@@ -182,11 +194,18 @@ func main() {
 	client := mqtt.NewClient(opts)
 	defer client.Disconnect(100)
 	if token := client.Connect(); token.Wait() && token.Error() != nil {
-		log.Panicln("Error connecting to MQTT broker:", token.Error())
+		log.Fatalln("Error connecting to MQTT broker:", token.Error())
 	}
 	if verbosity > 1 {
 		log.Println("Success connecting to MQTT broker")
 	}
+
+	// switch stdin into "raw" mode to get key presses without need for a newline
+	oldState, err := term.MakeRaw(0)
+	if err != nil {
+		log.Fatalln("Error changing terminal input mode:", err)
+	}
+	defer term.Restore(0, oldState)
 
 	//
 	// process recording file
@@ -200,6 +219,43 @@ func main() {
 	messagesLeft := true
 	for messagesLeft {
 		messagesLeft = playControl.PlayNextMessage()
+
+		bytes := make([]byte, 3)
+		numRead, err := os.Stdin.Read(bytes)
+		const ETX = '\x03' // ^C
+		const EOT = '\x04' // ^D
+		if err != nil {
+			log.Println("Error reading form terminal:", err)
+			break // don't just fatal exit here to let term.Restore be run
+		}
+		if bytes[0] == ETX || bytes[0] == EOT {
+			log.Println("Ctrl-C/ Ctrl-D detected exiting")
+			break
+		}
+		if numRead == 3 && bytes[0] == 27 && bytes[1] == 91 {
+			// Three-character control sequence, beginning with "ESC-[".
+
+			// Since there are no ASCII codes for arrow keys, we use
+			// Javascript key codes.
+			if bytes[2] == 65 {
+				// Up
+				fmt.Println("TODO: Up")
+			} else if bytes[2] == 66 {
+				// Down
+				fmt.Println("TODO: Down")
+			} else if bytes[2] == 67 {
+				// Right
+				fmt.Println("TODO: Right")
+			} else if bytes[2] == 68 {
+				// Left
+				fmt.Println("TODO: Left")
+			}
+		} else if numRead == 1 {
+			fmt.Printf("TODO: Letter %q %d", string(bytes[0]), int(bytes[0]))
+		} else {
+			fmt.Println("TODO: two chars")
+			// Two characters read??
+		}
 	}
 
 	log.Println("Replay finished")
