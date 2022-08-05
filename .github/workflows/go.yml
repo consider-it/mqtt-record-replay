@@ -23,7 +23,7 @@ jobs:
         include:
           - name: linux-x86_x64
             os: linux
-            arch: arm64
+            arch: amd64
           - name: linux-arm64
             os: linux
             arch: arm64
@@ -35,7 +35,7 @@ jobs:
             arch: amd64
           - name: windows-amd32
             os: windows
-            arch: amd64p32
+            arch: 386
           - name: macos-intel64
             os: darwin
             arch: amd64
