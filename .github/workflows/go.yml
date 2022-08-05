@@ -20,3 +20,6 @@ jobs:
 
     - name: Install
       run: go build ./...
+      
+    - name: ls
+      run: ls
