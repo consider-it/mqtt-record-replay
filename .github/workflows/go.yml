@@ -18,12 +18,15 @@ jobs:
       with:
         go-version: 1.18
         
-    - name: create build dir
-      run: mkdir build
+    - name: create build dirs
+      run: |
+        mkdir build_x86
+        mkdir build_arm64
 
-    - name: Install
-      run: go build -o build ./...
-      
+    - name: Build
+      run: |
+        go build -o build_x86 ./...
+        GOOS=linux GOARCH=arm64 go build_arm64 -o build ./...
 
       
     - name: Get Git Version String
@@ -42,14 +45,19 @@ jobs:
       
     - uses: actions/upload-artifact@v2
       with:
-        name: mqtt-record-replay-${{ env.app_version }}
-        path: build/mqtt-*
-      
+        name: mqtt-record-replay-x86-${{ env.app_version }}
+        path: build_x86/mqtt-*
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: mqtt-record-replay-arm64-${{ env.app_version }}
+        path: build_arm64/mqtt-*
+
     - uses: svenstaro/upload-release-action@v2
       name: Upload binaries to release
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: build/mqtt-*
+        file: build_arm64/mqtt-*
         file_glob: true
         tag: "test1"
         prerelease: true
