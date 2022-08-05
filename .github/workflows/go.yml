@@ -17,12 +17,14 @@ jobs:
       uses: actions/setup-go@v3
       with:
         go-version: 1.18
+        
+    - name: create build dir
+      run: mkdir build
 
     - name: Install
-      run: go build ./...
+      run: go build -o build ./...
       
-    - name: ls
-      run: ls
+
       
     - name: Get Git Version String
       working-directory: ${{github.workspace}}
@@ -41,13 +43,13 @@ jobs:
     - uses: actions/upload-artifact@v2
       with:
         name: mqtt-record-replay-${{ env.app_version }}
-        path: mqtt-*
+        path: build/mqtt-*
       
     - uses: svenstaro/upload-release-action@v2
       name: Upload binaries to release
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: mqtt-*
+        file: build/mqtt-*
         file_glob: true
         tag: "test1"
         prerelease: true
