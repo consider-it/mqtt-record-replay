@@ -23,3 +23,13 @@ jobs:
       
     - name: ls
       run: ls
+      
+    - uses: svenstaro/upload-release-action@v2
+      name: Upload binaries to release
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: mqtt_record
+        file_glob: true
+        tag: ${{ github.ref }}
+        prerelease: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+        overwrite: true
