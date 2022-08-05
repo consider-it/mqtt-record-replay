@@ -22,11 +22,13 @@ jobs:
       run: |
         mkdir build_x86
         mkdir build_arm64
+        mkdir build_arm32
 
     - name: Build
       run: |
         go build -o build_x86 ./...
         GOOS=linux GOARCH=arm64 go build -o build_arm64 ./...
+        GOOS=linux GOARCH=arm go build -o build_arm32 ./...
 
       
     - name: Get Git Version String
@@ -52,6 +54,12 @@ jobs:
       with:
         name: mqtt-record-replay-arm64-${{ env.app_version }}
         path: build_arm64/mqtt-*
+        
+    - uses: actions/upload-artifact@v2
+      with:
+        name: mqtt-record-replay-arm32-${{ env.app_version }}
+        path: build_arm32/mqtt-*
+
 
     - uses: svenstaro/upload-release-action@v2
       name: Upload binaries to release
