@@ -24,6 +24,25 @@ jobs:
     - name: ls
       run: ls
       
+    - name: Get Git Version String
+      working-directory: ${{github.workspace}}
+      run: |
+        if ${{ startsWith(github.ref, 'refs/tags/') }}; then
+          echo "app_version=${{ github.ref_name }}" >> $GITHUB_ENV
+        elif [[ "${{ github.event_name }}" == "pull_request" ]]; then            echo "app_version=$(echo "${{ github.head_ref }}" | sed -r 's/\//_/g')-$(git rev-parse --short "${{ github.event.pull_request.head.sha }}")" >> $GITHUB_ENV
+        else
+          echo "app_version=$(git rev-parse --abbrev-ref HEAD | sed -r 's/\//_/g')-$(git describe --always)" >> $GITHUB_ENV
+        fi
+    - name: Debug Print
+      run: |
+        echo ${{ env.app_version }}
+
+      
+    - uses: actions/upload-artifact@v2
+      with:
+        name: mqtt-*-${{ env.app_version }}
+        path: mqtt-*
+      
     - uses: svenstaro/upload-release-action@v2
       name: Upload binaries to release
       with:
