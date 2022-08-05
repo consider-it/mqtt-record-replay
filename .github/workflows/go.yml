@@ -30,6 +30,6 @@ jobs:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: mqtt_record
         file_glob: true
-        tag: ${{ github.ref }}
+        tag: "test1"
         prerelease: true
         overwrite: true
