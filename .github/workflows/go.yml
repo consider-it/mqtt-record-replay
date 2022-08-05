@@ -40,7 +40,7 @@ jobs:
       
     - uses: actions/upload-artifact@v2
       with:
-        name: mqtt-*-${{ env.app_version }}
+        name: mqtt-record-replay-${{ env.app_version }}
         path: mqtt-*
       
     - uses: svenstaro/upload-release-action@v2
