@@ -28,7 +28,7 @@ jobs:
       name: Upload binaries to release
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: mqtt_*
+        file: mqtt-*
         file_glob: true
         tag: "test1"
         prerelease: true
