@@ -30,6 +30,4 @@ jobs:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: mqtt_record
         file_glob: true
-        tag: ${{ github.ref }}
-        prerelease: ${{ !startsWith(github.ref, 'refs/tags/v') }}
         overwrite: true
