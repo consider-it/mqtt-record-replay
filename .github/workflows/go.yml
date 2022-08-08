@@ -3,34 +3,57 @@ name: Go
 on:
   push:
     branches: [ "v2" ]
+    tags:
+      - "*"
   pull_request:
     branches: [ "v2" ]
 
-jobs:
 
-  build:
+jobs:
+  configure:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
         go-version: 1.18
         
+  upload:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: linux-x86_x64
+            os: linux
+            arch: amd64
+          - name: linux-arm64
+            os: linux
+            arch: arm64
+          - name: linux-arm32
+            os: linux
+            arch: arm
+          - name: windows-amd64
+            os: windows
+            arch: amd64
+          - name: windows-amd32
+            os: windows
+            arch: 386
+          - name: macos-intel64
+            os: darwin
+            arch: amd64
+          - name: macos-AppleSilicon
+            os: darwin
+            arch: arm64
+    
+    steps:
+    - uses: actions/checkout@v3
     - name: create build dirs
-      run: |
-        mkdir build_x86
-        mkdir build_arm64
-        mkdir build_arm32
-
-    - name: Build
-      run: |
-        go build -o build_x86 ./...
-        GOOS=linux GOARCH=arm64 go build -o build_arm64 ./...
-        GOOS=linux GOARCH=arm go build -o build_arm32 ./...
-
+      run: mkdir ${{ matrix.name }}
       
+    - name: Build
+      run: GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} go build -o ${{ matrix.name }} ./...
+
     - name: Get Git Version String
       working-directory: ${{github.workspace}}
       run: |
@@ -44,29 +67,21 @@ jobs:
       run: |
         echo ${{ env.app_version }}
 
+    - name: Chmod +x
+      run: chmod +x mqtt-re*
       
     - uses: actions/upload-artifact@v2
       with:
-        name: mqtt-record-replay-x86-${{ env.app_version }}
-        path: build_x86/mqtt-*
-
-    - uses: actions/upload-artifact@v2
-      with:
-        name: mqtt-record-replay-arm64-${{ env.app_version }}
-        path: build_arm64/mqtt-*
-        
-    - uses: actions/upload-artifact@v2
-      with:
-        name: mqtt-record-replay-arm32-${{ env.app_version }}
-        path: build_arm32/mqtt-*
-
+        name: mqtt-record-replay-${{ matrix.name }}-${{ env.app_version }}
+        path: ${{ matrix.name }}/mqtt-*
 
     - uses: svenstaro/upload-release-action@v2
       name: Upload binaries to release
+      if: ${{ startsWith(github.ref, 'refs/tags/') }}
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: build_arm64/mqtt-*
+        file: v2xgateway-mk5-*.tgz
         file_glob: true
-        tag: "test1"
-        prerelease: true
+        tag: ${{ github.ref }}
+        prerelease: ${{ !startsWith(github.ref, 'refs/tags/v') }}
         overwrite: true
