@@ -70,17 +70,20 @@ jobs:
     - name: Chmod +x
       run: chmod +x mqtt-re*
       
+    - name: Zipping
+      run: zip -r ${{ matrix.name }}.zip ${{ matrix.name }}
+      
     - uses: actions/upload-artifact@v2
       with:
         name: mqtt-record-replay-${{ matrix.name }}-${{ env.app_version }}
-        path: ${{ matrix.name }}/mqtt-*
+        path: ${{ matrix.name }}.zip
 
     - uses: svenstaro/upload-release-action@v2
       name: Upload binaries to release
       if: ${{ startsWith(github.ref, 'refs/tags/') }}
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: ${{ matrix.name }}/mqtt-*
+        file: ${{ matrix.name }}.zip
         file_glob: true
         tag: ${{ github.ref }}
         prerelease: ${{ !startsWith(github.ref, 'refs/tags/v') }}
