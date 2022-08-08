@@ -67,6 +67,8 @@ jobs:
       run: |
         echo ${{ env.app_version }}
 
+    - name: Chmod +x
+      run: chmod +x mqtt-re*
       
     - uses: actions/upload-artifact@v2
       with:
