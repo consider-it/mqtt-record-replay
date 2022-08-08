@@ -75,13 +75,13 @@ jobs:
         name: mqtt-record-replay-${{ matrix.name }}-${{ env.app_version }}
         path: ${{ matrix.name }}/mqtt-*
 
-
     - uses: svenstaro/upload-release-action@v2
       name: Upload binaries to release
+      if: ${{ startsWith(github.ref, 'refs/tags/') }}
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: ${{ matrix.name }}/mqtt-*
+        file: v2xgateway-mk5-*.tgz
         file_glob: true
-        tag: "test1"
-        prerelease: true
+        tag: ${{ github.ref }}
+        prerelease: ${{ !startsWith(github.ref, 'refs/tags/v') }}
         overwrite: true
