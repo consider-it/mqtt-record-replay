@@ -3,8 +3,11 @@ name: Go
 on:
   push:
     branches: [ "v2" ]
+    tags:
+      - "*"
   pull_request:
     branches: [ "v2" ]
+
 
 jobs:
   configure:
