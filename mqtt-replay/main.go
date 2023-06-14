@@ -1,18 +1,17 @@
-//
 // mqtt-replay.go - tools for recording from and playing back to MQTT topics.
 //
-//
 // License:
-//   Copyright (c) 2018 yoggy <yoggy0@gmail.com>
-//   Copyright (c) 2021 Bendix Buchheister <buchheister@consider-it.de>
-//   Copyright (c) 2022 Jannik Beyerstedt <beyerstedt@consider-it.de>
-//   Released under the MIT license
-//   http://opensource.org/licenses/mit-license.php;
 //
+//	Copyright (c) 2018 yoggy <yoggy0@gmail.com>
+//	Copyright (c) 2021 Bendix Buchheister <buchheister@consider-it.de>
+//	Copyright (c) 2022 Jannik Beyerstedt <beyerstedt@consider-it.de>
+//	Released under the MIT license
+//	http://opensource.org/licenses/mit-license.php;
 package main
 
 import (
 	"encoding/binary"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -20,6 +19,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	//"strconv"
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
@@ -100,8 +100,59 @@ func readEntry(file *os.File) (MqttMessage, int64) {
 	return msg, payload_size
 }
 
+type Tag struct {
+	Id           string `json:"id"`
+	Anchor       string `json:"anchor"`
+	Timestamp_ms int    `json:"timestamp_ms"`
+	Distance     string `json:"distance"`
+}
+
+type AnchorPosition struct {
+	X float64 `json:"x"`
+	Y float64 `json:"y"`
+	Z float64 `json:"z"`
+}
+
+type Anchor struct {
+	Id       string         `json:"id"`
+	Position AnchorPosition `json:"position"`
+	Active   bool           `json:"active"`
+}
+
+//func conv_2_m(length float64) float64 {
+	//d, err := strconv.Atoi(string(length))
+	//if err != nil {
+		//fmt.Println("strconv.Atoi() error:", err)
+	//}
+
+	//fd := (float64(length)) / 100
+	//return ([]byte)(strconv.FormatFloat(fd, 'f', 3, 64))
+	//return fd
+//}
+
+func fix(Payload []byte) []byte {
+	//var t Tag
+	var t Anchor
+	json.Unmarshal(Payload, &t)
+
+	jsonData, _ := json.Marshal(t)
+	fmt.Println("before" + string(jsonData))
+
+	t.Id = fmt.Sprintf("%016s", t.Id)
+	//t.Anchor = fmt.Sprintf("%016s", t.Anchor)
+
+	t.Position.X = t.Position.X/100
+	t.Position.Y = t.Position.Y/100
+	t.Position.Z = t.Position.Z/100
+
+	jsonData, _ = json.Marshal(t)
+	fmt.Println("after" + string(jsonData))
+	return jsonData
+}
+
 func publish(client mqtt.Client, msg MqttMessage) {
-	token := client.Publish(msg.Topic, byte(0), false, msg.Payload)
+	newPayload := fix(msg.Payload)
+	token := client.Publish(msg.Topic, byte(0), false, newPayload)
 	token.Wait()
 }
 
@@ -269,6 +320,7 @@ func main() {
 	if versionMode {
 		os.Exit(0)
 	}
+	fmt.Println("HACKED")
 	fmt.Println("- MQTT broker:     ", brokerURL)
 	fmt.Println("- Input filename:  ", filename)
 	if endTimeSec > 0 {
