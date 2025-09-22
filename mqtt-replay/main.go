@@ -38,6 +38,7 @@ var filename string
 var startTimeSec uint
 var endTimeSec uint // end time of 0 seconds doesn't make sense, so use it for "full file"
 var versionMode bool
+var topicOverride string
 
 // internal state
 var shouldHalt bool
@@ -50,6 +51,7 @@ func init() {
 	flag.StringVar(&filename, "i", "", "Input file (REQUIRED)")
 	flag.UintVar(&startTimeSec, "s", 0, "Starting time offset (seconds)")
 	flag.UintVar(&endTimeSec, "e", 0, "End time (seconds, leave out for full file)")
+	flag.StringVar(&topicOverride, "t", "", "Override publish topic (use this instead of recorded msg topic)")
 	flag.BoolVar(&versionMode, "version", false, "Print version number")
 	flag.Parse()
 
@@ -100,8 +102,16 @@ func readEntry(file *os.File) (MqttMessage, int64) {
 	return msg, payload_size
 }
 
+func effectiveTopic(originalT string) string {
+    if topicOverride != "" {
+        return topicOverride
+    }
+    return originalT
+}
+
 func publish(client mqtt.Client, msg MqttMessage) {
-	token := client.Publish(msg.Topic, byte(0), false, msg.Payload)
+	topic := effectiveTopic(msg.Topic)
+	token := client.Publish(topic, byte(0), false, msg.Payload)
 	token.Wait()
 }
 
@@ -154,7 +164,7 @@ func (p *Playback) PlayFrom(startTimeMillis uint) {
 		for {
 			p.msgMillisRelative = msg.Millis - p.recordingStartTime
 			if p.msgMillisRelative >= int64(startTimeMillis) {
-				log.Printf("t=%6.2f s, %6d bytes, topic=%s\n", float32(p.msgMillisRelative)/1000.0, len, msg.Topic)
+				log.Printf("t=%6.2f s, %6d bytes, topic=%s\n", float32(p.msgMillisRelative)/1000.0, len, effectiveTopic(msg.Topic))
 				publish(p.Client, msg)
 
 				p.firstMsgMillis = msg.Millis
@@ -205,7 +215,7 @@ func (p *Playback) PlayNextMessage() bool {
 	targetWallclock := p.firstMsgWallclock + (msg.Millis - p.firstMsgMillis) + p.haltOffsetMillis
 	for {
 		if nowMillis() >= targetWallclock {
-			log.Printf("t=%6.2f s, %6d bytes, topic=%s\n", float32(p.msgMillisRelative)/1000.0, len, msg.Topic)
+			log.Printf("t=%6.2f s, %6d bytes, topic=%s\n", float32(p.msgMillisRelative)/1000.0, len, effectiveTopic(msg.Topic))
 			publish(p.Client, msg)
 			break
 		}
