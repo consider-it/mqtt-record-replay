@@ -11,9 +11,9 @@ jobs:
   configure:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v6
         with:
           go-version: 1.18
 
@@ -48,7 +48,7 @@ jobs:
             ext: ""
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
 
       - name: Get Git Version String
         working-directory: ${{github.workspace}}
@@ -73,7 +73,7 @@ jobs:
       - name: Create release archive
         run: tar -C ${{ matrix.name }} -czf mqtt-record-replay-${{ env.app_version }}-${{ matrix.name }}.tar.gz mqtt-record${{ matrix.ext }} mqtt-replay${{ matrix.ext }}
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v7
         with:
           name: mqtt-record-replay-${{ env.app_version }}-${{ matrix.name }}
           path: |
