@@ -27,7 +27,7 @@ import (
 	"golang.org/x/term"
 )
 
-const buildVersion string = "v2.1.0"
+const buildVersion string = "v2.2.0"
 
 // configuration values
 const skipSecondsFwd int = 30
