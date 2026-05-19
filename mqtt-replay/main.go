@@ -30,7 +30,8 @@ import (
 const buildVersion string = "v2.1.0"
 
 // configuration values
-const skipSeconds int = 5
+const skipSecondsFwd int = 30
+const skipSecondsBack int = 10
 
 var verbosity int
 var brokerURL string
@@ -344,12 +345,12 @@ func main() {
 			}
 
 			if key == KEY_RIGHT {
-				playControl.SkipAndPlay(skipSeconds)
+				playControl.SkipAndPlay(skipSecondsFwd)
 				shouldHalt = false
 				break
 
 			} else if key == KEY_LEFT {
-				playControl.SkipAndPlay(-skipSeconds)
+				playControl.SkipAndPlay(-skipSecondsBack)
 				shouldHalt = false
 				break
 
